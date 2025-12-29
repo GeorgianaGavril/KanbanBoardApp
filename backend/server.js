@@ -8,7 +8,7 @@ const router = require("./routes");
 
 app.use(
   cors({
-    origin: ["http://localhost:3000"],
+    origin: ["http://localhost:5173"],
     methods: ["POST", "GET", "PUT", "PATCH", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })

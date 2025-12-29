@@ -1,9 +1,10 @@
 <script setup>
-import { ref } from "vue";
 import { auth } from "../../firebaseConfig";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "../store/authStore";
+import axios from "axios";
 import {
   Button,
   Password,
@@ -14,6 +15,7 @@ import {
 } from "primevue";
 import "primeicons/primeicons.css";
 
+const username = ref("");
 const email = ref("");
 const password = ref("");
 const errorMessage = ref("");
@@ -21,21 +23,32 @@ const loading = ref(false);
 const router = useRouter();
 const authStore = useAuthStore();
 
-const handleLogin = async () => {
+const handleSignUp = async () => {
   loading.value = true;
   try {
-    const userCredentials = await signInWithEmailAndPassword(
+    const userCredentials = await createUserWithEmailAndPassword(
       auth,
       email.value,
       password.value
     );
 
-    await authStore.setUser(userCredentials.user);
+    await axios.post(
+      "http://localhost:3004/api/user",
+      {
+        name: username.value,
+        email: email.value,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${authStore.token}`,
+        },
+      }
+    );
 
     router.push("/");
   } catch (err) {
     errorMessage.value = "Incorrect login data!";
-    console.error(error.message);
+    console.error("Sign Up error: ", err);
   } finally {
     loading.value = false;
   }
@@ -46,18 +59,29 @@ const handleLogin = async () => {
   <div class="login-wrapper">
     <div class="login">
       <div class="sign-in">
-        <i class="pi pi-sign-in" style="font-size: 2rem; color: #444"></i>
+        <i class="pi pi-user-plus" style="font-size: 2rem; color: #444"></i>
       </div>
 
       <div class="login-header">
-        <h1 class="text-2xl font-bold">Sign In</h1>
+        <h1 class="text-2xl font-bold">Create an account</h1>
         <p class="text-secondary">
-          You don't have an account?
-          <router-link to="/signup" class="link">Create one here</router-link>
+          You already have an account?
+          <router-link to="/login" class="link">Sign in here</router-link>
         </p>
       </div>
 
-      <form @submit.prevent="handleLogin" class="login-box">
+      <form @submit.prevent="handleSignUp" class="login-box">
+        <IconField class="input">
+          <InputIcon class="pi pi-user" />
+          <InputText
+            id="username"
+            v-model="username"
+            placeholder="Username"
+            fluid
+            required
+          />
+        </IconField>
+
         <IconField class="input">
           <InputIcon class="pi pi-envelope" />
           <InputText
@@ -83,7 +107,7 @@ const handleLogin = async () => {
 
         <Button
           type="submit"
-          label="Sign In"
+          label="Sign Up"
           :loading="loading"
           fluid
           class="p-button-lg"
