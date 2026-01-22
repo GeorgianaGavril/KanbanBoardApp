@@ -35,7 +35,7 @@ const controller = {
 
   getProjectsByMember: async (req, res) => {
     try {
-      const userUid = "E_HARDCODAT";
+      const userUid = req.user.uid;
 
       const snapshot = await db
         .collection("Projects")
@@ -54,7 +54,7 @@ const controller = {
   getProjectById: async (req, res) => {
     try {
       const { projectId } = req.params;
-      // const userUid = req.user.uid;
+      const userUid = req.user.uid;
 
       const projectRef = db.collection("Projects").doc(projectId);
       const doc = await projectRef.get();
@@ -65,9 +65,11 @@ const controller = {
 
       const project = doc.data();
 
-      // if (!project.members_uids.includes(userUid)) {
-      //   return res.status(403).send({ message: "Unauthorized access to this project."})
-      // }
+      if (!project.members_uids.includes(userUid)) {
+        return res
+          .status(403)
+          .send({ message: "Unauthorized access to this project." });
+      }
 
       return res.status(200).send(project);
     } catch (err) {

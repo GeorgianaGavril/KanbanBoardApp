@@ -1,14 +1,14 @@
 const admin = require("firebase-admin");
 const db = admin.firestore();
-const { v4: uuidv4 } = require("uuid");
 
 const controller = {
   createUser: async (req, res) => {
     try {
       const { name, email } = req.body;
 
+      console.log(req.user);
       const newUser = {
-        id: uuidv4(),
+        id: req.user.uid,
         name,
         email,
         creation_date: admin.firestore.Timestamp.now(),

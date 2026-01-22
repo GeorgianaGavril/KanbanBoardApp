@@ -18,6 +18,12 @@ const routes = [
     component: () => import("../views/DashboardView.vue"),
     meta: { requiresAuth: true },
   },
+  {
+    path: "/createProject",
+    name: "CreateProject",
+    component: () => import("../views/CreateProject.vue"),
+    meta: { requiresAuth: true },
+  },
 ];
 
 const router = createRouter({

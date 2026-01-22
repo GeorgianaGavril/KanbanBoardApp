@@ -4,7 +4,7 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "../store/authStore";
-import axios from "axios";
+import api from "../services/api";
 import {
   Button,
   Password,
@@ -32,18 +32,13 @@ const handleSignUp = async () => {
       password.value
     );
 
-    await axios.post(
-      "http://localhost:3004/api/user",
-      {
-        name: username.value,
-        email: email.value,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${authStore.token}`,
-        },
-      }
-    );
+    const user = userCredentials.user;
+    await authStore.setUser(user);
+
+    await api.post("/user", {
+      name: username.value,
+      email: email.value,
+    });
 
     router.push("/");
   } catch (err) {
@@ -157,7 +152,6 @@ const handleSignUp = async () => {
   flex-direction: column;
   align-items: center;
   padding: 2.5rem;
-  background: #bdecff;
   background: linear-gradient(
     180deg,
     rgb(214 234 255) 0%,

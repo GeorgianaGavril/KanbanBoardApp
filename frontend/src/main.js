@@ -7,6 +7,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import PrimeVue from "primevue/config";
 import Aura from "@primevue/themes/aura";
 import { definePreset } from "@primevue/themes";
+import { useAuthStore } from "./store/authStore";
 
 const MyPreset = definePreset(Aura, {
   semantic: {
@@ -28,7 +29,7 @@ const MyPreset = definePreset(Aura, {
 
 let vueApp;
 
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   if (!vueApp) {
     const pinia = createPinia();
 
@@ -46,5 +47,13 @@ onAuthStateChanged(auth, (user) => {
       },
     });
     vueApp.mount("#app");
+  }
+
+  const authStore = useAuthStore();
+
+  if (user) {
+    await authStore.setUser(user);
+  } else {
+    await authStore.setUser(null);
   }
 });
