@@ -6,7 +6,7 @@ const controller = {
   createProject: async (req, res) => {
     try {
       const { name, description } = req.body;
-      const owner_uid = "E_HARDCODAT";
+      const owner_uid = req.user.uid;
 
       if (!name) {
         return res
@@ -20,7 +20,6 @@ const controller = {
         description: description || "",
         status: "Active",
         owner_uid,
-        members_uids: [owner_uid],
         creation_date: admin.firestore.Timestamp.now(),
       };
 
@@ -39,7 +38,7 @@ const controller = {
 
       const snapshot = await db
         .collection("Projects")
-        .where("members_uids", "array-contains", userUid)
+        .where("owner_uid", "==", userUid)
         .get();
 
       const projects = snapshot.docs.map((doc) => doc.data());
@@ -54,7 +53,6 @@ const controller = {
   getProjectById: async (req, res) => {
     try {
       const { projectId } = req.params;
-      const userUid = req.user.uid;
 
       const projectRef = db.collection("Projects").doc(projectId);
       const doc = await projectRef.get();
@@ -64,12 +62,6 @@ const controller = {
       }
 
       const project = doc.data();
-
-      if (!project.members_uids.includes(userUid)) {
-        return res
-          .status(403)
-          .send({ message: "Unauthorized access to this project." });
-      }
 
       return res.status(200).send(project);
     } catch (err) {
@@ -82,7 +74,7 @@ const controller = {
     try {
       const { projectId } = req.params;
       const { name, description, status } = req.body;
-      // const userUid = req.user.uid;
+      const userUid = req.user.uid;
 
       const projectRef = db.collection("Projects").doc(projectId);
       const doc = await projectRef.get();
@@ -91,11 +83,11 @@ const controller = {
         return res.status(404).send({ message: "Project not found." });
       }
 
-      // if (project.owner_uid !== userUid) {
-      //   return res.status(403).send({
-      //     message: "You don't have the permission to edit this project.",
-      //   });
-      // }
+      if (project.owner_uid !== userUid) {
+        return res.status(403).send({
+          message: "You don't have the permission to edit this project.",
+        });
+      }
 
       const updates = {};
       if (name) updates.name = name;
@@ -121,7 +113,7 @@ const controller = {
   deleteProjectById: async (req, res) => {
     try {
       const { projectId } = req.params;
-      // const userUid = req.user.uid;
+      const userUid = req.user.uid;
 
       const projectRef = db.collection("Projects").doc(projectId);
       const doc = await projectRef.get();
@@ -130,9 +122,11 @@ const controller = {
         return res.status(404).send({ message: "Project not found." });
       }
 
-      // if (owner_uid !== userUid) {
-      //   return res.status(401).send({ message: "Unauthorized access for this project"});
-      // }
+      if (owner_uid !== userUid) {
+        return res
+          .status(401)
+          .send({ message: "Unauthorized access for this project" });
+      }
 
       await projectRef.delete();
 

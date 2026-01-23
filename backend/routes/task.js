@@ -1,10 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const { taskController } = require("../controllers");
+const { checkAuth } = require("../middlewares/authMiddleware");
 
-router.post("/", taskController.createTask);
-router.get("/column/:columnId", taskController.getTasksByColumn);
-router.put("/:id", taskController.updateTaskById);
-router.delete("/:id", taskController.deleteTaskById);
+router.post("/", checkAuth, taskController.createTask);
+router.get("/column/:columnId", checkAuth, taskController.getTasksByColumn);
+router.put("/:id", checkAuth, taskController.updateTaskById);
+router.delete("/:id", checkAuth, taskController.deleteTaskById);
 
 module.exports = router;

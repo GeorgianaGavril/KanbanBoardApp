@@ -2,30 +2,16 @@ const admin = require("firebase-admin");
 const db = admin.firestore();
 const { v4: uuidv4 } = require("uuid");
 
-const isMember = async (projectId, userId) => {
-  const projectDoc = await db.collection("Projects").doc(projectId).get();
-  const project = projectDoc.data();
-  return projectDoc.exists && project.members_uids.includes(userId);
-};
-
 const controller = {
   createColumn: async (req, res) => {
     try {
       const { projectId } = req.params;
       const { name, order } = req.body;
-      //   const userUid = req.user.uid;
-      const userUid = "E_HARDCODAT";
 
       if (!name) {
         return res
           .status(400)
           .send({ message: "Name of the column is mandatory." });
-      }
-
-      if (!(await isMember(projectId, userUid))) {
-        return res
-          .status(403)
-          .send({ message: "User is not a member of this project." });
       }
 
       const newColumn = {
@@ -47,14 +33,6 @@ const controller = {
   getColumnsByProject: async (req, res) => {
     try {
       const { projectId } = req.params;
-      // const userUid = req.user.uid;
-      const userUid = "E_HARDCODAT";
-
-      if (!(await isMember(projectId, userUid))) {
-        return res
-          .status(403)
-          .send({ message: "User is not a member of this project." });
-      }
 
       const snapshot = await db
         .collection("Columns")
@@ -63,7 +41,25 @@ const controller = {
         .get();
 
       const columns = snapshot.docs.map((doc) => doc.data());
-      return res.status(200).send(columns);
+
+      const columnsWithTasks = await Promise.all(
+        columns.map(async (column) => {
+          const taskSnapshot = await db
+            .collection("Tasks")
+            .where("columnId", "==", column.id)
+            .orderBy("order_in_column", "asc")
+            .get();
+
+          const tasks = taskSnapshot.docs.map((doc) => doc.data());
+
+          return {
+            ...column,
+            tasks: tasks,
+          };
+        })
+      );
+
+      return res.status(200).send(columnsWithTasks);
     } catch (err) {
       console.error("Error when returning all columns: ", err);
       return res.status(500).send({ message: "Server error." });
@@ -74,8 +70,6 @@ const controller = {
     try {
       const { id } = req.params;
       const { name, order } = req.body;
-      // const userUid = req.user.uid;
-      const userUid = "E_HARDCODAT";
 
       const columnRef = db.collection("Columns").doc(id);
       const doc = await columnRef.get();
@@ -85,12 +79,6 @@ const controller = {
       }
 
       const column = doc.data();
-
-      if (!(await isMember(column.projectId, userUid))) {
-        return res
-          .status(403)
-          .send({ message: "User is not a member of this project." });
-      }
 
       const updates = {};
       if (name) updates.name = name;
@@ -115,8 +103,6 @@ const controller = {
   deleteColumnById: async (req, res) => {
     try {
       const { id } = req.params;
-      // const userUid = req.user.uid;
-      const userUid = "E_HARDCODAT";
 
       const columnRef = db.collection("Columns").doc(id);
       const doc = await columnRef.get();
@@ -126,12 +112,6 @@ const controller = {
       }
 
       const column = doc.data();
-
-      if (!(await isMember(column.projectId, userUid))) {
-        return res
-          .status(403)
-          .send({ message: "User is not a member of this project." });
-      }
 
       await columnRef.delete();
       return res.status(204).send({ message: "Column deleted successfully." });

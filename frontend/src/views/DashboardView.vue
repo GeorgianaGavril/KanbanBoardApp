@@ -50,6 +50,14 @@ const fetchProjects = async () => {
   }
 };
 
+const goToProject = (projectId) => {
+  if (projectId) {
+    router.push(`/project/${projectId}`);
+  } else {
+    console.error("Project doesn't have a valid ID.");
+  }
+};
+
 const formatFirestoreDate = (date) => {
   if (!date) return "";
 

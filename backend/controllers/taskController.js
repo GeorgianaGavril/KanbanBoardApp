@@ -18,7 +18,7 @@ const controller = {
         deadline,
         order_in_column,
       } = req.body;
-      const userUid = "E_HARDCODAT";
+      const userUid = req.user.uid;
 
       if (!(await hasProjectAccess(projectId, userUid))) {
         return res
@@ -75,7 +75,7 @@ const controller = {
     try {
       const { id } = req.params;
       const updates = req.body;
-      const userUid = "E_HARDCODAT";
+      const userUid = req.user.uid;
 
       const taskRef = db.collection("Tasks").doc(id);
       const doc = await taskRef.get();
@@ -103,7 +103,7 @@ const controller = {
   deleteTaskById: async (req, res) => {
     try {
       const { id } = req.params;
-      const userUid = "E_HARDCODAT";
+      const userUid = req.user.uid;
 
       const taskRef = db.collection("Tasks").doc(id);
       const doc = await taskRef.get();
