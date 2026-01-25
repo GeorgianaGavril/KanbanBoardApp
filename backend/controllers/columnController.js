@@ -6,7 +6,7 @@ const controller = {
   createColumn: async (req, res) => {
     try {
       const { projectId } = req.params;
-      const { name, order } = req.body;
+      const { name } = req.body;
 
       if (!name) {
         return res
@@ -18,7 +18,6 @@ const controller = {
         id: uuidv4(),
         projectId,
         name,
-        order: order !== undefined ? order : 0,
       };
 
       await db.collection("Columns").doc(newColumn.id).set(newColumn);
@@ -37,7 +36,6 @@ const controller = {
       const snapshot = await db
         .collection("Columns")
         .where("projectId", "==", projectId)
-        .orderBy("order", "asc")
         .get();
 
       const columns = snapshot.docs.map((doc) => doc.data());
@@ -47,7 +45,6 @@ const controller = {
           const taskSnapshot = await db
             .collection("Tasks")
             .where("columnId", "==", column.id)
-            .orderBy("order_in_column", "asc")
             .get();
 
           const tasks = taskSnapshot.docs.map((doc) => doc.data());

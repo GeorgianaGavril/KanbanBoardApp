@@ -31,6 +31,8 @@ const projects = ref(null);
 const searchQuery = ref("");
 const statusFilter = ref("All");
 
+const MAX_DESCRIPTION_LENGTH = 130;
+
 const filteredProjects = computed(() => {
   if (!projects.value) return [];
 
@@ -56,8 +58,13 @@ const handleLogout = async () => {
   }
 };
 
+const handleSaveProject = async () => {};
+
 const handleCreateProject = async () => {
-  if (!newProject.value.name.trim()) return;
+  if (!newProject.value.name.trim()) {
+    alert("Choose a title for the project.");
+    return;
+  }
 
   try {
     const res = await api.post("/project", {
@@ -157,9 +164,8 @@ onMounted(() => {
         Welcome back, <strong>{{ user?.name }}!</strong>
       </p>
       <ul>
-        <h3>Home</h3>
         <div class="sidebar-item" @click="isProjectVisible = true">
-          <h3>Create a project</h3>
+          <h3 style="cursor: pointer">Create a project</h3>
         </div>
         <Button @click="handleLogout">Logout</Button>
       </ul>
@@ -251,8 +257,24 @@ onMounted(() => {
       </div>
 
       <div class="flex flex-column gap-2">
-        <label for="p-desc" class="font-semibold">Description</label>
-        <Textarea id="p-desc" v-model="newProject.description" rows="3" />
+        <div class="flex justify-content-between">
+          <label for="p-desc" class="font-semibold">Description </label>
+          <small
+            :class="{
+              'text-red-500':
+                newProject.description.length >= MAX_DESCRIPTION_LENGTH,
+            }"
+          >
+            {{ newProject.description.length }} / {{ MAX_DESCRIPTION_LENGTH }}
+          </small>
+        </div>
+        <Textarea
+          id="p-desc"
+          v-model="newProject.description"
+          rows="3"
+          :maxlength="MAX_DESCRIPTION_LENGTH"
+          class="w-full"
+        />
       </div>
     </div>
 
@@ -273,13 +295,14 @@ onMounted(() => {
 .dashboard {
   display: flex;
   flex-direction: row;
-  height: 100vh;
+  min-height: 100vh;
   width: 100%;
   background-color: #272264;
 }
 
 .sidebar {
   width: 300px;
+  flex-shrink: 0;
   background-color: #272264;
   padding: 2rem 1rem;
   color: #e2e8f0;
@@ -303,20 +326,14 @@ onMounted(() => {
 }
 
 .project-section {
-  display: flex;
-  flex-direction: column;
-  width: 80%;
+  flex-grow: 1;
+  width: 100%;
   padding: 20px 40px;
-  /* background: linear-gradient(
-    180deg,
-    rgb(224 246 255) 0%,
-    rgb(236 251 255) 23%,
-    rgba(255, 255, 255, 1) 100%
-  ); */
   background-color: #f3f2ff;
   border-bottom-left-radius: 25px;
   border-top-left-radius: 25px;
-  box-shadow: 2px 4px 16px black;
+  box-shadow: -5px 0px 15px rgb(0, 0, 0, 0.3);
+  overflow-y: auto;
 }
 
 .project-section h1 {
@@ -402,5 +419,88 @@ onMounted(() => {
 
 .p-input-icon-left input {
   padding-left: 35px;
+}
+
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  padding: 1rem 0;
+}
+
+.project-card {
+  background-color: #ffffff;
+  color: #272264;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.project-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-grow: 1;
+}
+
+/* RESPONSIVENESS */
+@media (max-width: 1024px) {
+  .project-section {
+    padding: 20px;
+  }
+  .sidebar {
+    width: 240px;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .sidebar p {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .sidebar ul {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    margin: 0;
+  }
+
+  .sidebar ul h3 {
+    margin-bottom: 0;
+    font-size: 1rem;
+  }
+
+  .project-section {
+    border-top-left-radius: 25px;
+    border-top-right-radius: 25px;
+    border-bottom-left-radius: 0;
+    width: 100%;
+    padding: 20px 15px;
+  }
+
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .projects-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

@@ -2,29 +2,10 @@ const admin = require("firebase-admin");
 const db = admin.firestore();
 const { v4: uuidv4 } = require("uuid");
 
-const hasProjectAccess = async (projectId, userId) => {
-  const doc = await db.collection("Projects").doc(projectId).get();
-  return doc.exists && doc.data().members_uids.includes(userId);
-};
-
 const controller = {
   createTask: async (req, res) => {
     try {
-      const {
-        projectId,
-        columnId,
-        title,
-        description,
-        deadline,
-        order_in_column,
-      } = req.body;
-      const userUid = req.user.uid;
-
-      if (!(await hasProjectAccess(projectId, userUid))) {
-        return res
-          .status(403)
-          .send({ message: "Forbidden: No access to this project." });
-      }
+      const { projectId, columnId, title, description } = req.body;
 
       if (!title) {
         return res
@@ -38,11 +19,6 @@ const controller = {
         columnId,
         title,
         description: description || "",
-        asignated_uids: [],
-        deadline: deadline
-          ? admin.firestore.Timestamp.fromDate(new Date(deadline))
-          : null,
-        order_in_column: order_in_column || 0,
         creation_date: admin.firestore.Timestamp.now(),
       };
 
@@ -60,7 +36,6 @@ const controller = {
       const snapshot = await db
         .collection("Tasks")
         .where("columnId", "==", columnId)
-        .orderBy("order_in_column", "asc")
         .get();
 
       const columns = snapshot.docs.map((doc) => doc.data());
@@ -86,12 +61,6 @@ const controller = {
 
       const task = doc.data();
 
-      if (!(await hasProjectAccess(task.projectId, userUid))) {
-        return res
-          .status(403)
-          .send({ message: "Forbidden: No access to this project." });
-      }
-
       await taskRef.update(updates);
       return res.status(200).send((await taskRef.get()).data());
     } catch (err) {
@@ -113,12 +82,6 @@ const controller = {
       }
 
       const task = doc.data();
-
-      if (!(await hasProjectAccess(task.projectId, userUid))) {
-        return res
-          .status(403)
-          .send({ message: "Forbidden: No access to this project." });
-      }
 
       await taskRef.delete();
       return res.status(204).send({ message: "Task deleted successfully." });

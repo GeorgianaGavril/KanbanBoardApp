@@ -13,8 +13,10 @@ const project = ref(null);
 const columns = ref([]);
 
 const isTaskVisible = ref(false);
+const isEditMode = ref(false);
 const selectedColumnId = ref(null);
 const newTask = ref({
+  id: null,
   title: "",
   description: "",
 });
@@ -23,7 +25,10 @@ const isColumnVisible = ref(false);
 const newColumnName = ref("");
 
 const handleCreateColumn = async () => {
-  if (!newColumnName.value.trim()) return;
+  if (!newColumnName.value.trim()) {
+    alert("Choose a title for the column.");
+    return;
+  }
 
   try {
     const res = await api.post(`/column/project/${projectId}`, {
@@ -57,8 +62,9 @@ const deleteColumn = async (columnId) => {
 };
 
 const openAddTaskModal = (columnId) => {
+  isEditMode.value = false;
   selectedColumnId.value = columnId;
-  newTask.value = { title: "", description: "" };
+  newTask.value = { id: null, title: "", description: "" };
   isTaskVisible.value = true;
 };
 
@@ -77,8 +83,52 @@ const deleteTask = async (columnId, taskId) => {
   }
 };
 
+const openModifyTaskModal = (columnId, task) => {
+  selectedColumnId.value = columnId;
+  isEditMode.value = true;
+  newTask.value = { ...task };
+  isTaskVisible.value = true;
+};
+
+const handleSaveTask = () => {
+  if (isEditMode.value) {
+    handleModifyTask();
+  } else {
+    handleCreateTask();
+  }
+};
+
+const handleModifyTask = async () => {
+  if (!newTask.value.title.trim()) {
+    alert("Choose a title for the task.");
+    return;
+  }
+
+  try {
+    const res = await api.put(`/task/${newTask.value.id}`, {
+      projectId,
+      columnId: selectedColumnId.value,
+      title: newTask.value.title,
+      description: newTask.value.description,
+    });
+
+    const col = columns.value.find((c) => c.id === selectedColumnId.value);
+    if (col) {
+      const index = col.tasks.findIndex((t) => t.id === newTask.value.id);
+      if (index !== -1) col.tasks[index] = res.data;
+    }
+
+    isTaskVisible.value = false;
+  } catch (err) {
+    console.error("Error when updating the task: ", err);
+  }
+};
+
 const handleCreateTask = async () => {
-  if (!newTask.value.title.trim()) return;
+  if (!newTask.value.title.trim()) {
+    alert("Choose a title for the task.");
+    return;
+  }
 
   try {
     const res = await api.post("/task", {
@@ -140,7 +190,7 @@ onMounted(fetchBoardData);
     <Dialog
       v-model:visible="isTaskVisible"
       modal
-      header="Add a New Task"
+      :header="isEditMode ? 'Modify the Task' : 'Add a New Task'"
       :style="{ width: '30rem' }"
     >
       <div class="flex flex-column gap-4">
@@ -161,12 +211,13 @@ onMounted(fetchBoardData);
           severity="secondary"
           @click="isTaskVisible = false"
         />
-        <Button label="Save" icon="pi pi-check" @click="handleCreateTask" />
+        <Button label="Save" icon="pi pi-check" @click="handleSaveTask" />
       </template>
     </Dialog>
 
     <Dialog
       v-model:visible="isColumnVisible"
+      :breakpoints="{ '960px': '75vw', '641px': '90vw' }"
       modal
       header="Add a New Column"
       :style="{ width: '25rem' }"
@@ -213,6 +264,7 @@ onMounted(fetchBoardData);
           <div
             v-for="task in column.tasks"
             :key="task.id"
+            @click="openModifyTaskModal(column.id, task)"
             class="task-card group"
           >
             <div class="flex justify-between items-start">
@@ -226,7 +278,7 @@ onMounted(fetchBoardData);
                 rounded
                 size="small"
                 class="delete-task-btn"
-                @click="deleteTask(column.id, task.id)"
+                @click.stop="deleteTask(column.id, task.id)"
               />
             </div>
             <p v-if="task.description" class="text-xs text-gray-500 mt-1">
@@ -261,30 +313,43 @@ onMounted(fetchBoardData);
   flex-direction: column;
   height: 100vh;
   background-color: #f3f2ff;
+  overflow: hidden;
 }
 
 .board-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
+  padding: 1rem 1.5rem;
   background: white;
   border-bottom: 1px solid #e2e8f0;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.board-header h1 {
+  font-size: 1.5rem;
+  margin: 0;
+  color: #272264;
 }
 
 .kanban-wrapper {
   display: flex;
   flex-direction: row;
-  gap: 1.5rem;
-  padding: 1.5rem;
+  gap: 1.2rem;
+  padding: 1rem;
   overflow-x: auto;
   flex-grow: 1;
+  align-items: flex-start;
+
+  scrollbar-width: thin;
+  scrollbar-color: #272264 #f3f2ff;
 }
 
 .kanban-column {
   background-color: #ebedf0;
-  min-width: 300px;
-  max-width: 300px;
+  min-width: 280px;
+  max-width: 280px;
   border-radius: 12px;
   padding: 1rem;
   display: flex;
@@ -344,13 +409,14 @@ onMounted(fetchBoardData);
 }
 
 .task-card {
-  position: relative;
   background: white;
   padding: 0.8rem;
   border-radius: 8px;
   margin-bottom: 0.8rem;
   border: 1px solid #e2e8f0;
   transition: all 0.2s;
+  cursor: pointer;
+  word-wrap: break-word;
 }
 
 .task-card:hover {
@@ -361,5 +427,30 @@ onMounted(fetchBoardData);
 .task-content {
   font-weight: 500;
   color: #1e293b;
+}
+
+@media (max-width: 768px) {
+  .board-header {
+    padding: 0.8rem 1rem;
+  }
+
+  .board-header h1 {
+    font-size: 1.2rem;
+  }
+
+  .kanban-wrapper {
+    gap: 0.8rem;
+    padding: 0.8rem;
+    scroll-snap-type: x mandatory;
+  }
+
+  .kanban-column {
+    min-width: 85vw;
+    scroll-snap-align: center;
+  }
+
+  :deep(.p-dialog) {
+    width: 90vw !important;
+  }
 }
 </style>
