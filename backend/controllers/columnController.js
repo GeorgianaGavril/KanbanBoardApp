@@ -66,7 +66,7 @@ const controller = {
   updateColumnById: async (req, res) => {
     try {
       const { id } = req.params;
-      const { name, order } = req.body;
+      const { name } = req.body;
 
       const columnRef = db.collection("Columns").doc(id);
       const doc = await columnRef.get();
@@ -79,7 +79,6 @@ const controller = {
 
       const updates = {};
       if (name) updates.name = name;
-      if (order !== undefined) updates.order = order;
 
       if (Object.keys(updates).length === 0) {
         return res

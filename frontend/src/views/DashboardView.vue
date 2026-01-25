@@ -58,8 +58,6 @@ const handleLogout = async () => {
   }
 };
 
-const handleSaveProject = async () => {};
-
 const handleCreateProject = async () => {
   if (!newProject.value.name.trim()) {
     alert("Choose a title for the project.");

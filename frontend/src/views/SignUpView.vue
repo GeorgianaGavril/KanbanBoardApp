@@ -168,7 +168,6 @@ const handleSignUp = async () => {
   display: flex;
   justify-content: center;
   flex-direction: column;
-  /* background-color: #9d9fc6; */
   padding: 20px 20px;
 }
 
