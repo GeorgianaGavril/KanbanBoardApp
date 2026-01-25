@@ -43,6 +43,19 @@ const handleCreateColumn = async () => {
   }
 };
 
+const deleteColumn = async (columnId) => {
+  if (!confirm("Do you want to delete this column?")) return;
+
+  try {
+    await api.delete(`/column/${columnId}`);
+
+    columns.value = columns.value.filter((c) => c.id !== columnId);
+  } catch (err) {
+    console.error("Error when deleting the column: ", err);
+    alert("Couldn't delete the column.");
+  }
+};
+
 const openAddTaskModal = (columnId) => {
   selectedColumnId.value = columnId;
   newTask.value = { title: "", description: "" };
@@ -186,7 +199,14 @@ onMounted(fetchBoardData);
       <div v-for="column in columns" :key="column.id" class="kanban-column">
         <div class="column-header">
           <h3>{{ column.name }}</h3>
-          <Button icon="pi pi-ellipsis-v" text rounded size="small" />
+          <Button
+            icon="pi pi-trash"
+            text
+            rounded
+            severity="danger"
+            size="small"
+            @click="deleteColumn(column.id)"
+          />
         </div>
 
         <div class="task-list">

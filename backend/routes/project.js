@@ -3,7 +3,7 @@ const router = express.Router();
 const { checkAuth } = require("../middlewares/authMiddleware");
 const projectController = require("../controllers").projectController;
 
-router.post("/", projectController.createProject);
+router.post("/", checkAuth, projectController.createProject);
 router.get("/", checkAuth, projectController.getProjectsByMember);
 router.get("/:projectId", checkAuth, projectController.getProjectById);
 router.put("/:projectId", checkAuth, projectController.updateProjectById);

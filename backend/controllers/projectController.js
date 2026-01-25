@@ -83,6 +83,8 @@ const controller = {
         return res.status(404).send({ message: "Project not found." });
       }
 
+      const project = doc.data();
+
       if (project.owner_uid !== userUid) {
         return res.status(403).send({
           message: "You don't have the permission to edit this project.",
@@ -122,7 +124,9 @@ const controller = {
         return res.status(404).send({ message: "Project not found." });
       }
 
-      if (owner_uid !== userUid) {
+      const project = doc.data();
+
+      if (project.owner_uid !== userUid) {
         return res
           .status(401)
           .send({ message: "Unauthorized access for this project" });

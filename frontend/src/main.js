@@ -8,6 +8,7 @@ import PrimeVue from "primevue/config";
 import Aura from "@primevue/themes/aura";
 import { definePreset } from "@primevue/themes";
 import { useAuthStore } from "./store/authStore";
+import "primeicons/primeicons.css";
 
 const MyPreset = definePreset(Aura, {
   semantic: {

@@ -19,12 +19,6 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
-    path: "/createProject",
-    name: "CreateProject",
-    component: () => import("../views/CreateProjectView.vue"),
-    meta: { requiresAuth: true },
-  },
-  {
     path: "/project/:id",
     name: "ProjectBoard",
     component: () => import("../views/ProjectBoardView.vue"),
